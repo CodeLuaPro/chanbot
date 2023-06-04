@@ -53,17 +53,25 @@ while request_status:
     for threads in gen_chan():
         
 
-        comment = strip_tags(get_threads('com'))
+        text = strip_tags(get_threads('com'))
         number = int(get_threads('no'))
         
-        c.execute('SELECT * FROM thread WHERE (com=? AND no=?)', (comment, number))
+        c.execute('SELECT * FROM thread WHERE (post_text=? AND no=?)', (text, number))
         entry = c.fetchone()
+
         if entry is None:
-            c.execute('INSERT INTO thread(com, no) VALUES (?, ?)', (comment, number))
+            c.execute('INSERT INTO thread(post_text, no) VALUES (?, ?)', (text, number))
         else:
             pass
-        #print(strip_tags(get_threads('com')))
-        #print(get_threads('no'))
+        if 'last_replies' in threads:
+            for comment in threads['last_replies']:
+                com = strip_tags(comment.get('com', 'NaN'))
+                c.execute('SELECT * FROM comment WHERE (com=? AND no=?)', (com, number))
+                db_com = c.fetchone()
+                if db_com is None:
+                    c.execute('INSERT INTO comment(com, no) VALUES (?, ?)', (com, number))
+        else:
+            pass
         conn.commit()
         
     time.sleep(2)
